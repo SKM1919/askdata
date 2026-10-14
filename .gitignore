@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Data: Olist licence is non-commercial, so link to it, never upload it
+data/
+*.duckdb
+
+# Secrets
+.env
+.env*
+!.env.example
