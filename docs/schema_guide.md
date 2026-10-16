@@ -21,3 +21,9 @@ This guide explains the Olist database to the AI: what each table means and the 
 - **Evidence:** 99,441 orders: 97.0% delivered, 1.7% in progress, 1.2% never completed (625 canceled + 609 unavailable). In-progress orders are mostly the most recent ones, so recent periods are affected more than the 3% total suggests.
 - **Rule for the AI:** For revenue and sales questions, exclude cancelled and unavailable orders: `WHERE order_status NOT IN ('canceled', 'unavailable')`. For "how many orders were placed", count all orders. Always state which filter was used. Note: the database spells it `canceled` (one "l").
 - **Business impact:** Counting cancelled orders makes campaign sales and ROAS look better than reality. Using only delivered orders makes the latest month look worse, because recent orders haven't arrived yet. Either mistake can lead to wrong budget decisions.
+
+### Trap 4: category names are in Portuguese
+- **What happens:** `products.product_category_name` is in Portuguese (e.g. `cama_mesa_banho`). English names are in a separate table, `product_category_name_translation`. Users ask in English ("bed and bath"), so the AI must join the translation table.
+- **Evidence:** 73 categories. 2 have no English translation (`pc_gamer`, `portateis_cozinha_e_preparadores_de_alimentos`). 610 products have no category at all.
+- **Rule for the AI:** Always LEFT JOIN `product_category_name_translation` and show `COALESCE(product_category_name_english, product_category_name, 'unknown')`. This shows English when available, Portuguese if not translated, and `unknown` if blank. Never drop products without a category.
+- **Business impact:** Without the translation, users can't find categories by their English names and get "no results". If products without a category are dropped, revenue by category won't add up to total revenue, and trust in every report drops.
