@@ -1,0 +1,5 @@
+{"id": "q01", "question": "How many orders were placed in total?", "gold_sql": "SELECT COUNT(*) AS orders FROM orders", "difficulty": "simple", "trap": "none"}
+{"id": "q02", "question": "How many unique customers do we have?", "gold_sql": "SELECT COUNT(DISTINCT customer_unique_id) AS customers FROM customers", "difficulty": "simple", "trap": "customer_unique_id"}
+{"id": "q03", "question": "How many sellers are on the platform?", "gold_sql": "SELECT COUNT(*) AS sellers FROM sellers", "difficulty": "simple", "trap": "none"}
+{"id": "q04", "question": "How many orders were cancelled?", "gold_sql": "SELECT COUNT(*) AS cancelled_orders FROM orders WHERE order_status = 'canceled'", "difficulty": "simple", "trap": "canceled_spelling"}
+{"id": "q05", "question": "Which payment method is used most often?", "gold_sql": "SELECT payment_type, COUNT(*) AS payments FROM order_payments GROUP BY payment_type ORDER BY payments DESC LIMIT 1", "difficulty": "simple", "trap": "none"}
