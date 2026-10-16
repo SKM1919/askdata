@@ -33,3 +33,9 @@ This guide explains the Olist database to the AI: what each table means and the 
 - **Evidence:** 2016-09: 4 orders, 2016-10: 324, 2016-11: none, 2016-12: 1. 2018-08: 6,512 orders, then 2018-09: 16 and 2018-10: 4. Comparing Sep 2018 with Aug 2018 shows a fake drop of -99.8%.
 - **Rule for the AI:** For trends, growth and month-over-month questions, use only January 2017 to August 2018. "Last month" or "latest month" means August 2018, the last complete month. Always state the date range used.
 - **Business impact:** Without this rule, the AI reports a sales collapse that never happened (or fake hyper-growth at the start). A false alarm like this can trigger wrong budget cuts and damages trust in the tool.
+
+### Trap 6: reviews have duplicates in both directions
+- **What happens:** One review can be attached to several orders (same `review_id`), and one order can have several reviews (same `order_id`). The reviews table is not "one row per order".
+- **Evidence:** 99,224 review rows but only 98,410 unique review IDs (814 reused) and 98,673 reviewed orders. 547 orders have more than one review.
+- **Rule for the AI:** To count reviews, use `COUNT(DISTINCT review_id)`. For anything per order (average score, joining reviews to orders or revenue), first keep one review per order, the latest one: `QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_answer_timestamp DESC) = 1`. Never join the raw reviews table to `order_items`.
+- **Business impact:** Joining raw reviews to orders counts some orders twice, so revenue for "5-star orders" is silently inflated, with no error shown. Average scores (used like a CSAT/NPS signal) are also skewed by repeated reviews.
