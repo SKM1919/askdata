@@ -15,3 +15,9 @@ This guide explains the Olist database to the AI: what each table means and the 
 - **Evidence:** Products only: R$ 13.59M. Products + shipping: R$ 15.84M. Total paid: R$ 16.01M. Gap of R$ 2.4M (about 18%). Shipping is about 14% of the total. Vouchers are R$ 0.38M of payments.
 - **Rule for the AI:** By default, "revenue" or "sales" = `SUM(order_items.price)`, excluding shipping. Use `payment_value` only for questions about payments (amount paid, payment methods). Always state which definition was used.
 - **Business impact:** If marketing uses total paid and finance uses product sales, dashboards differ by up to 18%. ROAS and campaign ROI change depending on who calculated them, and teams argue about numbers instead of acting.
+
+### Trap 3: not every order is a real sale
+- **What happens:** Orders have 8 statuses. Some never became real sales (`canceled`, `unavailable`). Others are still in progress (`shipped`, `invoiced`, `processing`, `created`, `approved`). Counting every order as a sale makes revenue too high.
+- **Evidence:** 99,441 orders: 97.0% delivered, 1.7% in progress, 1.2% never completed (625 canceled + 609 unavailable). In-progress orders are mostly the most recent ones, so recent periods are affected more than the 3% total suggests.
+- **Rule for the AI:** For revenue and sales questions, exclude cancelled and unavailable orders: `WHERE order_status NOT IN ('canceled', 'unavailable')`. For "how many orders were placed", count all orders. Always state which filter was used. Note: the database spells it `canceled` (one "l").
+- **Business impact:** Counting cancelled orders makes campaign sales and ROAS look better than reality. Using only delivered orders makes the latest month look worse, because recent orders haven't arrived yet. Either mistake can lead to wrong budget decisions.
