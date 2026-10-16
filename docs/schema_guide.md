@@ -27,3 +27,9 @@ This guide explains the Olist database to the AI: what each table means and the 
 - **Evidence:** 73 categories. 2 have no English translation (`pc_gamer`, `portateis_cozinha_e_preparadores_de_alimentos`). 610 products have no category at all.
 - **Rule for the AI:** Always LEFT JOIN `product_category_name_translation` and show `COALESCE(product_category_name_english, product_category_name, 'unknown')`. This shows English when available, Portuguese if not translated, and `unknown` if blank. Never drop products without a category.
 - **Business impact:** Without the translation, users can't find categories by their English names and get "no results". If products without a category are dropped, revenue by category won't add up to total revenue, and trust in every report drops.
+
+### Trap 5: the first and last months are incomplete
+- **What happens:** Orders run from September 2016 to October 2018, but the edges have almost no data. 2016 was a test period, and the data export stopped in early September 2018.
+- **Evidence:** 2016-09: 4 orders, 2016-10: 324, 2016-11: none, 2016-12: 1. 2018-08: 6,512 orders, then 2018-09: 16 and 2018-10: 4. Comparing Sep 2018 with Aug 2018 shows a fake drop of -99.8%.
+- **Rule for the AI:** For trends, growth and month-over-month questions, use only January 2017 to August 2018. "Last month" or "latest month" means August 2018, the last complete month. Always state the date range used.
+- **Business impact:** Without this rule, the AI reports a sales collapse that never happened (or fake hyper-growth at the start). A false alarm like this can trigger wrong budget cuts and damages trust in the tool.

@@ -5,4 +5,4 @@ import sys
 import duckdb
 
 con = duckdb.connect("data/olist.duckdb", read_only=True)
-print(con.sql(sys.argv[1]))
+con.sql(sys.argv[1]).show(max_rows=100)
