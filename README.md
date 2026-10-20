@@ -3,6 +3,8 @@
 **Ask business questions in plain English; get answers from an e-commerce database.**
 A text-to-SQL agent with a systematic evaluation, built as an AI Product Manager portfolio project.
 
+![AskData demo](docs/demo.gif)
+
 ## Headline result
 
 A schema guide documenting 6 business-data traps raised execution accuracy from **74% to 98%** on a 50-question golden set.
