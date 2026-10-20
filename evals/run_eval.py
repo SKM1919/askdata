@@ -43,7 +43,8 @@ def values_match(g, a):
     if isinstance(g, float) and isinstance(a, float):
         if g.is_integer() and a.is_integer():
             return g == a
-        return any(abs(c - g) <= NUM_TOL * max(abs(g), 1e-9) for c in (a, a * 100))
+        allowed = max(NUM_TOL * abs(g), 0.01)  # 1%, or 0.01 for small values rounded to 2 decimals
+        return any(abs(c - g) <= allowed for c in (a, a * 100))
     if isinstance(g, str) and isinstance(a, str):
         if re.sub(r"[^a-z0-9]", "", g) == re.sub(r"[^a-z0-9]", "", a):
             return True
