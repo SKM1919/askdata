@@ -19,28 +19,6 @@ The entire gain came from questions that touch a documented trap (24/37 -> 36/37
 
 ## How it works
 
-cat > README.md << 'EOF'
-# AskData
-
-**Ask business questions in plain English; get answers from an e-commerce database.**
-A text-to-SQL agent with a systematic evaluation, built as an AI Product Manager portfolio project.
-
-## Headline result
-
-A schema guide documenting 6 business-data traps raised execution accuracy from **74% to 98%** on a 50-question golden set.
-
-| | Guide OFF | Guide ON |
-|---|---|---|
-| **Execution accuracy** | **74%** | **98%** |
-| Joins (20 questions) | 13 | 20 |
-| Hard (10 questions) | 5 | 10 |
-| Avg tokens per question | 880 | 2,502 |
-| Avg latency | 1.27s | 1.96s |
-
-The entire gain came from questions that touch a documented trap (24/37 -> 36/37); questions with no trap scored 13/13 either way. Details in [docs/error_analysis.md](docs/error_analysis.md).
-
-## How it works
-
     Question -> Gemini (schema + schema guide) -> SQL -> DuckDB (read-only) -> Answer + assumptions
 
 1. The agent reads the database schema automatically and, optionally, the schema guide.
