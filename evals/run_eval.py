@@ -2,9 +2,16 @@
 Usage:
   uv run python evals/run_eval.py              (schema guide ON)
   uv run python evals/run_eval.py --no-guide   (schema guide OFF)
+
+Checker rules (v2):
+  - "Which ..." questions are graded on the item named (first gold column), not the supporting number.
+  - Whole numbers must match exactly. Decimals match within 1%. A fraction matches its percentage (0.0343 = 3.43).
+  - Text ignores case, spaces and symbols (On-Time = on_time). A month matches its first day (2017-11 = 2017-11-01).
+  - Row order and extra AI columns are ignored; the number of rows must match.
 """
 import json
 import os
+import re
 import sys
 import time
 from collections import Counter
@@ -15,37 +22,64 @@ import duckdb
 sys.path.insert(0, "src")
 from agent import ask  # noqa: E402
 
-PAUSE_S = 4  # wait between questions to stay under Gemini's free-tier rate limit
+PAUSE_S = 4      # wait between questions to stay under Gemini's free-tier rate limit
+NUM_TOL = 0.01   # 1% tolerance for decimals
 
 
 def norm(v):
-    """Make one value comparable: round numbers, tidy text, drop midnight time from dates."""
+    """Turn a value into a float or a tidy lowercase string."""
     if v is None:
         return None
     try:
-        return round(float(v), 1)
+        return float(v)
     except (TypeError, ValueError):
         s = str(v).strip().lower()
         return s[:-9] if s.endswith(" 00:00:00") else s
 
 
-def rows_of(df):
-    return [tuple(norm(v) for v in row) for row in df.itertuples(index=False)]
+def values_match(g, a):
+    if g is None or a is None:
+        return g is None and a is None
+    if isinstance(g, float) and isinstance(a, float):
+        if g.is_integer() and a.is_integer():
+            return g == a
+        return any(abs(c - g) <= NUM_TOL * max(abs(g), 1e-9) for c in (a, a * 100))
+    if isinstance(g, str) and isinstance(a, str):
+        if re.sub(r"[^a-z0-9]", "", g) == re.sub(r"[^a-z0-9]", "", a):
+            return True
+        return bool(re.fullmatch(r"\d{4}-\d{2}", g)) and a.startswith(g + "-01")
+    return False
 
 
-def results_match(gold_rows, gen_rows):
-    """Same number of rows, and every gold row's values appear in some AI row (any order, extra columns OK)."""
-    if len(gold_rows) != len(gen_rows):
+def row_match(gold_row, ai_row):
+    """Every gold value must match a different value in the AI row."""
+    available = list(ai_row)
+    for gv in gold_row:
+        for i, av in enumerate(available):
+            if values_match(gv, av):
+                available.pop(i)
+                break
+        else:
+            return False
+    return True
+
+
+def results_match(gold_rows, ai_rows):
+    if len(gold_rows) != len(ai_rows):
         return False
-    remaining = list(gen_rows)
+    remaining = list(ai_rows)
     for g in gold_rows:
         for i, r in enumerate(remaining):
-            if not (Counter(g) - Counter(r)):
+            if row_match(g, r):
                 remaining.pop(i)
                 break
         else:
             return False
     return True
+
+
+def rows_of(df):
+    return [tuple(norm(v) for v in row) for row in df.itertuples(index=False)]
 
 
 def score(q, r, con):
@@ -57,8 +91,10 @@ def score(q, r, con):
         return "asked_unnecessarily"
     if "error" in r or "df" not in r:
         return "sql_error"
-    gold_rows = rows_of(con.execute(q["gold_sql"]).df())
-    return "correct" if results_match(gold_rows, rows_of(r["df"])) else "wrong_result"
+    gold_df = con.execute(q["gold_sql"]).df()
+    if q["question"].lower().startswith("which"):
+        gold_df = gold_df.iloc[:, :1]  # grade the item named, not the supporting number
+    return "correct" if results_match(rows_of(gold_df), rows_of(r["df"])) else "wrong_result"
 
 
 def main():
