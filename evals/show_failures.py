@@ -4,7 +4,9 @@ Usage: uv run python evals/show_failures.py evals/results/<file>.jsonl
 import json
 import sys
 
-gold = {q["id"]: q for q in (json.loads(line) for line in open("evals/golden.jsonl") if line.strip())}
+gold = {}
+for qfile in ("evals/golden.jsonl", "evals/heldout.jsonl"):
+    gold.update({q["id"]: q for q in (json.loads(line) for line in open(qfile) if line.strip())})
 
 for line in open(sys.argv[1]):
     r = json.loads(line)
