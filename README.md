@@ -34,6 +34,7 @@ The entire gain came from questions that touch a documented trap (24/37 -> 36/37
 - **Measured the agent with and without the guide**, then read every failure by hand
 - **Found and fixed 3 bugs in my own evaluation**; the improvement stayed at 22-24 points across all versions
 - **Made and logged the business decisions** behind the metrics: [decision log](docs/decision_log.md)
+- **Wrote the PRD**: problem, users, metrics, guardrails and roadmap: [PRD](docs/PRD.md)
 
 ## Business insights found along the way
 
