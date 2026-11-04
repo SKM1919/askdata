@@ -1,0 +1,117 @@
+# AskData semantic layer v1: one agreed definition per business metric.
+# The agent must use these formulas exactly. Owner: analytics team.
+
+rules:
+  valid_orders: "o.order_status NOT IN ('canceled', 'unavailable')"
+  trend_window: "For trends and growth use January 2017 to August 2018 only. 'Last month' means August 2018."
+  year_comparison: "When comparing 2017 with 2018, compare the same months (January to August), because 2018 data ends in August."
+  percentages: "Show percentages on a 0-100 scale."
+
+metrics:
+  - name: revenue
+    synonyms: [sales, turnover, how much we sold, income]
+    definition: "Product sales in R$, excluding shipping, from valid orders."
+    sql: "SUM(oi.price)"
+    from: "order_items oi JOIN orders o ON oi.order_id = o.order_id"
+    where: "valid_orders"
+
+  - name: orders_placed
+    synonyms: [orders received, how many orders, number of orders]
+    definition: "Every order placed, whatever its status."
+    sql: "COUNT(*)"
+    from: "orders o"
+    where: "none"
+
+  - name: valid_orders
+    synonyms: [completed orders, real orders, successful orders]
+    definition: "Orders that were not cancelled or unavailable."
+    sql: "COUNT(DISTINCT o.order_id)"
+    from: "orders o"
+    where: "valid_orders"
+
+  - name: aov
+    synonyms: [average order value, average basket, average spend per order]
+    definition: "Revenue divided by the number of valid orders that have items."
+    sql: "SUM(oi.price) / COUNT(DISTINCT oi.order_id)"
+    from: "order_items oi JOIN orders o ON oi.order_id = o.order_id"
+    where: "valid_orders"
+
+  - name: items_sold
+    synonyms: [units sold, products sold, items]
+    definition: "Number of order_items rows. Each row is one item. order_item_id is a position number, never a quantity: do not sum it."
+    sql: "COUNT(*)"
+    from: "order_items oi JOIN orders o ON oi.order_id = o.order_id"
+    where: "valid_orders"
+
+  - name: customers
+    synonyms: [unique customers, how many customers, customer base]
+    definition: "Real people, counted by customer_unique_id."
+    sql: "COUNT(DISTINCT c.customer_unique_id)"
+    from: "customers c"
+    where: "none"
+
+  - name: buying_customers
+    synonyms: [customers who bought, buyers, shoppers]
+    definition: "Real people with at least one valid order."
+    sql: "COUNT(DISTINCT c.customer_unique_id)"
+    from: "orders o JOIN customers c ON o.customer_id = c.customer_id"
+    where: "valid_orders"
+
+  - name: new_customers
+    synonyms: [acquired customers, first-time buyers, new buyers]
+    definition: "Real people whose FIRST valid order falls in the period asked about."
+    sql: "COUNT(*) over customers whose MIN(order_purchase_timestamp) of valid orders is in the period"
+    from: "orders o JOIN customers c ON o.customer_id = c.customer_id"
+    where: "valid_orders"
+
+  - name: repeat_rate
+    synonyms: [repeat purchase rate, retention, customers who came back, bought more than once]
+    definition: "Percentage of buying customers with 2 or more valid orders."
+    sql: "100.0 * COUNT(*) FILTER (WHERE n > 1) / COUNT(*) over one row per customer_unique_id with n = number of valid orders"
+    from: "orders o JOIN customers c ON o.customer_id = c.customer_id"
+    where: "valid_orders"
+
+  - name: delivery_days
+    synonyms: [delivery time, how long delivery takes, wait for delivery, shipping time]
+    definition: "Exact elapsed time from purchase to delivery, in days (not calendar-day counts)."
+    sql: "AVG(date_diff('second', CAST(o.order_purchase_timestamp AS TIMESTAMP), CAST(o.order_delivered_customer_date AS TIMESTAMP))) / 86400.0"
+    from: "orders o"
+    where: "o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL"
+
+  - name: late_rate
+    synonyms: [late deliveries, percentage late, delayed orders]
+    definition: "Percentage of delivered orders that arrived after the estimated delivery date."
+    sql: "100.0 * AVG(CASE WHEN CAST(o.order_delivered_customer_date AS TIMESTAMP) > CAST(o.order_estimated_delivery_date AS TIMESTAMP) THEN 1 ELSE 0 END)"
+    from: "orders o"
+    where: "o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL"
+
+  - name: avg_review_score
+    synonyms: [rating, review score, customer satisfaction, stars]
+    definition: "Average score using only the latest review per order."
+    sql: "AVG(r.review_score)"
+    from: "(SELECT order_id, review_score FROM order_reviews QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_answer_timestamp DESC) = 1) r"
+    where: "none"
+
+  - name: freight_share
+    synonyms: [shipping cost percentage, freight as percent of sales]
+    definition: "Shipping charges as a percentage of product sales, valid orders."
+    sql: "100.0 * SUM(oi.freight_value) / SUM(oi.price)"
+    from: "order_items oi JOIN orders o ON oi.order_id = o.order_id"
+    where: "valid_orders"
+
+dimensions:
+  - name: category
+    sql: "COALESCE(t.product_category_name_english, p.product_category_name, 'unknown')"
+    join: "JOIN products p ON oi.product_id = p.product_id LEFT JOIN product_category_name_translation t ON p.product_category_name = t.product_category_name"
+
+  - name: month
+    sql: "strftime(CAST(o.order_purchase_timestamp AS TIMESTAMP), '%Y-%m')"
+    join: "none"
+
+  - name: customer_state
+    sql: "c.customer_state"
+    join: "JOIN customers c ON o.customer_id = c.customer_id"
+
+  - name: seller_state
+    sql: "s.seller_state"
+    join: "JOIN sellers s ON oi.seller_id = s.seller_id"
