@@ -1,11 +1,12 @@
 """Run every gold SQL in evals/golden.jsonl and print the answer, so we can check each one by eye.
 Ambiguous questions have no gold SQL: we print what the AI should ask instead."""
 import json
+import sys
 import duckdb
 
 con = duckdb.connect("data/olist.duckdb", read_only=True)
 
-with open("evals/golden.jsonl") as f:
+with open(sys.argv[1] if len(sys.argv) > 1 else "evals/golden.jsonl") as f:
     for line in f:
         if not line.strip():
             continue
