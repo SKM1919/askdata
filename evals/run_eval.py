@@ -100,9 +100,11 @@ def score(q, r, con):
 
 def main():
     use_guide = "--no-guide" not in sys.argv
-    label = "guide_on" if use_guide else "guide_off"
+    qfile = sys.argv[sys.argv.index("--set") + 1] if "--set" in sys.argv else "evals/golden.jsonl"
+    set_name = os.path.basename(qfile).replace(".jsonl", "")
+    label = f"{set_name}_" + ("guide_on" if use_guide else "guide_off")
     con = duckdb.connect("data/olist.duckdb", read_only=True)
-    questions = [json.loads(line) for line in open("evals/golden.jsonl") if line.strip()]
+    questions = [json.loads(line) for line in open(qfile) if line.strip()]
 
     print(f"Running {len(questions)} questions with schema guide {'ON' if use_guide else 'OFF'}...\n")
     records = []
