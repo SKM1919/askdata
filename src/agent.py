@@ -1,7 +1,8 @@
 """AskData agent: turns a business question into SQL and runs it read-only on DuckDB.
 Usage:
-  uv run python src/agent.py "your question"              (with schema guide)
-  uv run python src/agent.py "your question" --no-guide   (without schema guide)
+  uv run python src/agent.py "your question"                (schema guide ON)
+  uv run python src/agent.py "your question" --semantic     (guide + semantic layer)
+  uv run python src/agent.py "your question" --no-guide     (schema only)
 """
 import json
 import os
@@ -17,6 +18,7 @@ load_dotenv()
 
 DB_PATH = "data/olist.duckdb"
 GUIDE_PATH = "docs/schema_guide.md"
+SEMANTIC_PATH = "semantic/metrics.yaml"
 MODEL = "gemini-3.5-flash-lite"
 
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
@@ -37,7 +39,7 @@ def get_schema(con):
     return "\n".join(lines)
 
 
-def build_prompt(question, schema, guide):
+def build_prompt(question, schema, guide, semantic):
     """Put together everything the AI needs to see."""
     parts = [
         "You are a data analyst. Write ONE DuckDB SQL query that answers the question.",
@@ -51,15 +53,22 @@ def build_prompt(question, schema, guide):
     ]
     if guide:
         parts.append(f"\nSCHEMA GUIDE (business rules you must follow):\n{guide}")
+    if semantic:
+        parts.append(
+            "\nSEMANTIC LAYER (official metric definitions). When a question matches a metric or one of its "
+            "synonyms, use that metric's sql, from and where EXACTLY. 'valid_orders' in a where field means "
+            f"the rule of that name below.\n{semantic}"
+        )
     parts.append(f"\nQUESTION: {question}")
     return "\n".join(parts)
 
 
-def ask(question, use_guide=True):
+def ask(question, use_guide=True, use_semantic=False):
     """Ask one question. Returns the AI's reply plus the query result, time and tokens."""
     con = duckdb.connect(DB_PATH, read_only=True)  # guardrail: the AI can never change data
     guide = open(GUIDE_PATH).read() if use_guide else None
-    prompt = build_prompt(question, get_schema(con), guide)
+    semantic = open(SEMANTIC_PATH).read() if use_semantic else None
+    prompt = build_prompt(question, get_schema(con), guide, semantic)
 
     start = time.time()
     resp = client.models.generate_content(
@@ -83,11 +92,12 @@ def ask(question, use_guide=True):
 if __name__ == "__main__":
     args = sys.argv[1:]
     use_guide = "--no-guide" not in args
-    question = " ".join(a for a in args if a != "--no-guide")
+    use_semantic = "--semantic" in args
+    question = " ".join(a for a in args if a not in ("--no-guide", "--semantic"))
 
-    r = ask(question, use_guide)
+    r = ask(question, use_guide, use_semantic)
     print(f"\nQuestion: {question}")
-    print(f"Schema guide: {'ON' if use_guide else 'OFF'}")
+    print(f"Schema guide: {'ON' if use_guide else 'OFF'} | Semantic layer: {'ON' if use_semantic else 'OFF'}")
     if r.get("needs_clarification"):
         print(f"\nThe AI asks: {r.get('clarifying_question')}")
     else:

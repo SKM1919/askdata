@@ -100,9 +100,11 @@ def score(q, r, con):
 
 def main():
     use_guide = "--no-guide" not in sys.argv
+    use_semantic = "--semantic" in sys.argv
     qfile = sys.argv[sys.argv.index("--set") + 1] if "--set" in sys.argv else "evals/golden.jsonl"
     set_name = os.path.basename(qfile).replace(".jsonl", "")
-    label = f"{set_name}_" + ("guide_on" if use_guide else "guide_off")
+    label = f"{set_name}_" + ("guide_on" if use_guide else "guide_off") + ("_semantic" if use_semantic else "")
+    print(f"Semantic layer: {'ON' if use_semantic else 'OFF'}")
     con = duckdb.connect("data/olist.duckdb", read_only=True)
     questions = [json.loads(line) for line in open(qfile) if line.strip()]
 
@@ -110,11 +112,11 @@ def main():
     records = []
     for i, q in enumerate(questions, 1):
         try:
-            r = ask(q["question"], use_guide)
+            r = ask(q["question"], use_guide, use_semantic)
         except Exception:
             time.sleep(30)  # probably a rate limit: wait, then retry once
             try:
-                r = ask(q["question"], use_guide)
+                r = ask(q["question"], use_guide, use_semantic)
             except Exception as e:
                 r = {"api_error": str(e)}
 
