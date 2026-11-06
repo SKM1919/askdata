@@ -28,3 +28,9 @@ Each entry records a product decision, the options considered, and why.
 - **Options:** A) keep the question and report the failure, B) change the expected behaviour after seeing the result.
 - **Decision:** A.
 - **Why:** Changing the exam after seeing a failure would inflate the score. When the AI should ask versus assume is an open product question for the Medium level.
+
+## D5: Cancelled orders do not count as seller sales (2026-11-04)
+- **Context:** In the semantic-layer run, the AI counted only sellers with valid orders for "How many sellers sell health and beauty products?" (q37); the answer key counted all sellers.
+- **Options:** A) count every seller with any order, B) count only sellers with valid (not cancelled or unavailable) orders.
+- **Decision:** B.
+- **Why:** Same logic as D3: a cancelled order is not a real purchase for the customer, so it is not a real sale for the seller. One rule everywhere keeps customer and seller numbers consistent. The answer key was updated.
