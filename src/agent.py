@@ -56,7 +56,7 @@ def build_prompt(question, schema, guide, semantic):
     if semantic:
         parts.append(
             "\nSEMANTIC LAYER (official metric definitions). When a question matches a metric or one of its "
-            "synonyms, use that metric's sql, from and where EXACTLY. 'valid_orders' in a where field means "
+            "synonyms, use that metric's sql formula and filters; adapt the joins and query structure to the question. 'valid_orders' in a where field means "
             f"the rule of that name below.\n{semantic}"
         )
     parts.append(f"\nQUESTION: {question}")

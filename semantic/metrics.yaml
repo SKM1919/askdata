@@ -1,4 +1,4 @@
-# AskData semantic layer v1: one agreed definition per business metric.
+# AskData semantic layer v2: one agreed definition per business metric.
 # The agent must use these formulas exactly. Owner: analytics team.
 
 rules:
@@ -6,6 +6,10 @@ rules:
   trend_window: "For trends and growth use January 2017 to August 2018 only. 'Last month' means August 2018."
   year_comparison: "When comparing 2017 with 2018, compare the same months (January to August), because 2018 data ends in August."
   percentages: "Show percentages on a 0-100 scale."
+  clarify: "If the question does not name a metric (e.g. how are we doing, performance, best, top, better) or does not say what good or better means, set needs_clarification to true and ask. Do not choose a default metric."
+  growth: "For change or growth questions, return the percentage change as well as the values."
+  window_functions: "Calculate LAG and other window functions over all months first, then filter to the months asked about (use QUALIFY or an outer query). Never filter in WHERE before LAG."
+  per_order_averages: "Before averaging an order-level value (such as review score) by seller or category, reduce to one row per order and seller or category, so orders with several items are not counted twice."
 
 metrics:
   - name: revenue
@@ -89,7 +93,7 @@ metrics:
     synonyms: [rating, review score, customer satisfaction, stars]
     definition: "Average score using only the latest review per order."
     sql: "AVG(r.review_score)"
-    from: "(SELECT order_id, review_score FROM order_reviews QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_answer_timestamp DESC) = 1) r"
+    from: "(SELECT * FROM order_reviews QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_answer_timestamp DESC) = 1) r"
     where: "none"
 
   - name: freight_share
