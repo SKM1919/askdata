@@ -133,7 +133,7 @@ def main():
         time.sleep(PAUSE_S)
 
     os.makedirs("evals/results", exist_ok=True)
-    out_path = f"evals/results/{label}_{datetime.now():%Y%m%d_%H%M}.jsonl"
+    out_path = f"evals/results/{label}_{datetime.now():%Y%m%d_%H%M%S}.jsonl"
     with open(out_path, "w") as f:
         for rec in records:
             f.write(json.dumps(rec) + "\n")
