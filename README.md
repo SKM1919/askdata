@@ -19,6 +19,15 @@ A schema guide documenting 6 business-data traps raised execution accuracy from 
 
 The entire gain came from questions that touch a documented trap (24/37 -> 36/37); questions with no trap scored 13/13 either way. Details in [docs/error_analysis.md](docs/error_analysis.md).
 
+### Medium level: does it generalise?
+
+| Configuration (3 runs each) | Golden set | Held-out (new questions) |
+|---|---|---|
+| Schema guide | 92.7% | 93.3% |
+| Schema guide + semantic layer | 96.7% | 93.0% |
+
+The guide generalises to questions written after it (60% -> 93%). The semantic layer's accuracy gain is within run-to-run variation, but it makes metric definitions consistent, at about 73% more tokens. Details in [docs/medium_results.md](docs/medium_results.md).
+
 ## How it works
 
     Question -> Gemini (schema + schema guide) -> SQL -> DuckDB (read-only) -> Answer + assumptions
@@ -66,6 +75,6 @@ The entire gain came from questions that touch a documented trap (24/37 -> 36/37
 ## Roadmap
 
 - [x] **Easy:** text-to-SQL agent, schema guide, 50-question eval, error analysis
-- [ ] **Medium:** semantic layer, few-shot example retrieval, held-out test set, Postgres
+- [x] **Medium:** held-out test set, semantic layer, repeated runs, fairer evaluation (few-shot retrieval and Postgres deferred)
 - [ ] **Hard:** MCP server with read-only access, blocked destructive SQL, tracing, cost and latency report
 - [ ] **Hardest:** multi-agent weekly business review, compared with human analyst time
