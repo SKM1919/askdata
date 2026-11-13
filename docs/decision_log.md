@@ -34,3 +34,9 @@ Each entry records a product decision, the options considered, and why.
 - **Options:** A) count every seller with any order, B) count only sellers with valid (not cancelled or unavailable) orders.
 - **Decision:** B.
 - **Why:** Same logic as D3: a cancelled order is not a real purchase for the customer, so it is not a real sale for the seller. One rule everywhere keeps customer and seller numbers consistent. The answer key was updated.
+
+## D6: Keep the semantic layer (2026-11-13)
+- **Context:** Over 3 runs each, guide + semantic layer v2 scored 95.3% on the golden set vs 92.7% for the guide alone, and 93.0% vs 93.3% on the held-out set: within run-to-run variation. It uses about 73% more tokens per question (4,330 vs 2,500).
+- **Options:** A) keep it, B) drop it.
+- **Decision:** A, keep it.
+- **Why:** Its value is consistent metric definitions, not raw accuracy. It fixed questions the guide alone got wrong in every run (q37, decision D5) and made the agent ask on vague questions more often (q25). The Hard level's `describe_metric` tool will read from it. Cost will be reduced by sending only the relevant metrics.

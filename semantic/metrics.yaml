@@ -8,7 +8,7 @@ rules:
   percentages: "Show percentages on a 0-100 scale."
   clarify: "If the question does not name a metric (e.g. how are we doing, performance, best, top, better) or does not say what good or better means, set needs_clarification to true and ask. Do not choose a default metric."
   growth: "For change or growth questions, return the percentage change as well as the values."
-  window_functions: "Calculate LAG and other window functions over all months first, then filter to the months asked about (use QUALIFY or an outer query). Never filter in WHERE before LAG."
+  window_functions: "Calculate LAG and other window functions over all months in a CTE first, then filter to the months asked about with WHERE in an outer query. Use QUALIFY only in the same SELECT that contains the window function. Never filter months before LAG."
   per_order_averages: "Before averaging an order-level value (such as review score) by seller or category, reduce to one row per order and seller or category, so orders with several items are not counted twice."
 
 metrics:

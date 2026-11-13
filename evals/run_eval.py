@@ -92,10 +92,14 @@ def score(q, r, con):
         return "asked_unnecessarily"
     if "error" in r or "df" not in r:
         return "sql_error"
-    gold_df = con.execute(q["gold_sql"]).df()
-    if q["question"].lower().startswith("which"):
-        gold_df = gold_df.iloc[:, :1]  # grade the item named, not the supporting number
-    return "correct" if results_match(rows_of(gold_df), rows_of(r["df"])) else "wrong_result"
+    ai_rows = rows_of(r["df"])
+    for gold_sql in [q["gold_sql"]] + q.get("alt_gold_sql", []):  # some questions have more than one acceptable answer shape
+        gold_df = con.execute(gold_sql).df()
+        if q["question"].lower().startswith("which"):
+            gold_df = gold_df.iloc[:, :1]  # grade the item named, not the supporting number
+        if results_match(rows_of(gold_df), ai_rows):
+            return "correct"
+    return "wrong_result"
 
 
 def main():
