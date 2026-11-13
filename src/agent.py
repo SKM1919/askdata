@@ -14,6 +14,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from guardrails import check_sql, safe_connection
+
 load_dotenv()
 
 DB_PATH = "data/olist.duckdb"
@@ -65,7 +67,7 @@ def build_prompt(question, schema, guide, semantic):
 
 def ask(question, use_guide=True, use_semantic=False):
     """Ask one question. Returns the AI's reply plus the query result, time and tokens."""
-    con = duckdb.connect(DB_PATH, read_only=True)  # guardrail: the AI can never change data
+    con = safe_connection(DB_PATH)  # guardrail: read-only, no access to other files
     guide = open(GUIDE_PATH).read() if use_guide else None
     semantic = open(SEMANTIC_PATH).read() if use_semantic else None
     prompt = build_prompt(question, get_schema(con), guide, semantic)
@@ -81,10 +83,14 @@ def ask(question, use_guide=True, use_semantic=False):
     result["tokens"] = resp.usage_metadata.total_token_count
 
     if not result.get("needs_clarification") and result.get("sql"):
-        try:
-            result["df"] = con.execute(result["sql"]).df()
-        except Exception as e:
-            result["error"] = str(e)
+        ok, reason = check_sql(result["sql"])  # guardrail: only a single SELECT may run
+        if not ok:
+            result["error"] = f"BLOCKED by guardrail: {reason}"
+        else:
+            try:
+                result["df"] = con.execute(result["sql"]).df()
+            except Exception as e:
+                result["error"] = str(e)
     con.close()
     return result
 
