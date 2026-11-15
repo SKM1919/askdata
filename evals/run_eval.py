@@ -116,11 +116,11 @@ def main():
     records = []
     for i, q in enumerate(questions, 1):
         try:
-            r = ask(q["question"], use_guide, use_semantic)
+            r = ask(q["question"], use_guide, use_semantic, source="eval")
         except Exception:
             time.sleep(30)  # probably a rate limit: wait, then retry once
             try:
-                r = ask(q["question"], use_guide, use_semantic)
+                r = ask(q["question"], use_guide, use_semantic, source="eval")
             except Exception as e:
                 r = {"api_error": str(e)}
 

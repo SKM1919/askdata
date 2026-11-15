@@ -28,7 +28,7 @@ def ask(question: str) -> dict:
     """Answer a business question about the Olist e-commerce data in plain English.
     Returns the SQL used, the assumptions made and the result rows,
     or a clarifying question if the request is too vague."""
-    r = agent_ask(question, use_guide=True, use_semantic=True)
+    r = agent_ask(question, use_guide=True, use_semantic=True, source="mcp")
     if r.get("needs_clarification"):
         return {"clarifying_question": r.get("clarifying_question")}
     out = {"sql": r.get("sql"), "assumptions": r.get("assumptions")}
