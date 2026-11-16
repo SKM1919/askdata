@@ -28,6 +28,14 @@ The entire gain came from questions that touch a documented trap (24/37 -> 36/37
 
 The guide generalises to questions written after it (60% -> 93%). The semantic layer's accuracy gain is within run-to-run variation, but it makes metric definitions consistent, at about 73% more tokens. Details in [docs/medium_results.md](docs/medium_results.md).
 
+### Hard level: safe, usable from Claude, measured
+
+- **Guardrails:** only a single read-only SELECT can ever run, with no file access, enforced in code (20 automated tests). Red-team prompts to delete data or read a private file were refused.
+- **MCP server:** Claude (desktop app) can use AskData through four tools: `ask`, `run_query`, `list_metrics`, `describe_metric`. Verified through the live connection.
+- **Tracing and cost:** every question is logged. About **$1.67 per 1,000 questions** and **~1 second** typical response time.
+
+Details in [docs/hard_results.md](docs/hard_results.md).
+
 ## How it works
 
     Question -> Gemini (schema + schema guide) -> SQL -> DuckDB (read-only) -> Answer + assumptions
@@ -58,6 +66,7 @@ The guide generalises to questions written after it (60% -> 93%). The semantic l
 4. Load the data: `uv run python src/load_data.py`
 5. Ask a question: `uv run python src/agent.py "Which state has the most customers?"`
 6. Run the evaluation: `uv run python evals/run_eval.py` (add `--no-guide` for the baseline)
+7. Use it from the Claude desktop app: add an `askdata` entry to `claude_desktop_config.json` that runs `uv --directory <path-to-askdata> run python src/mcp_server.py`, then restart Claude.
 
 ## Project structure
 
@@ -70,11 +79,16 @@ The guide generalises to questions written after it (60% -> 93%). The semantic l
 | `evals/run_eval.py` | Scores the agent against the golden set |
 | `evals/compare_runs.py` | Compares two runs by trap |
 | `evals/results/` | Saved evaluation runs |
-| `docs/` | Schema guide, error analysis, decision log |
+| `src/guardrails.py` | SQL guardrails: single SELECT only, no file access |
+| `src/mcp_server.py` | MCP server for Claude and other assistants |
+| `semantic/metrics.yaml` | Semantic layer: one definition per metric |
+| `evals/cost_report.py` | Cost and latency report from traces |
+| `tests/` | Guardrail and MCP tests (`uv run pytest -q`) |
+| `docs/` | Schema guide, PRD, decision log, results for each level |
 
 ## Roadmap
 
 - [x] **Easy:** text-to-SQL agent, schema guide, 50-question eval, error analysis
 - [x] **Medium:** held-out test set, semantic layer, repeated runs, fairer evaluation (few-shot retrieval and Postgres deferred)
-- [ ] **Hard:** MCP server with read-only access, blocked destructive SQL, tracing, cost and latency report
+- [x] **Hard:** SQL guardrails, MCP server, tracing, cost and latency report (metric selection deliberately deferred, D7)
 - [ ] **Hardest:** multi-agent weekly business review, compared with human analyst time

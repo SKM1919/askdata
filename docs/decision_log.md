@@ -40,3 +40,9 @@ Each entry records a product decision, the options considered, and why.
 - **Options:** A) keep it, B) drop it.
 - **Decision:** A, keep it.
 - **Why:** Its value is consistent metric definitions, not raw accuracy. It fixed questions the guide alone got wrong in every run (q37, decision D5) and made the agent ask on vague questions more often (q25). The Hard level's `describe_metric` tool will read from it. Cost will be reduced by sending only the relevant metrics.
+
+## D7: Do not optimise the semantic layer's token cost yet (2026-11-16)
+- **Context:** The cost report shows the semantic layer adds about $0.0005 per question ($1.18 vs $1.67 per 1,000 questions). Sending only the metrics relevant to each question could remove most of that.
+- **Options:** A) skip for now, B) build metric selection.
+- **Decision:** A.
+- **Why:** At team scale (about 22,000 questions a month) the saving is about $12 a month. Selecting metrics adds complexity and a real accuracy risk if a needed definition is left out, and a wrong number costs far more than $12. Revisit if usage grows about 100x.
