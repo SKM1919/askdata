@@ -7,13 +7,16 @@ import sys
 import duckdb
 
 sys.path.insert(0, "evals")
+sys.path.insert(0, "src")
 from run_eval import score  # same checker as the live exam  # noqa: E402
 
 questions = {}
 for qfile in ("evals/golden.jsonl", "evals/heldout.jsonl"):
     questions.update({q["id"]: q for q in (json.loads(line) for line in open(qfile) if line.strip())})
 
-con = duckdb.connect("data/olist.duckdb", read_only=True)
+from guardrails import safe_connection  # noqa: E402
+
+con = safe_connection("data/olist.duckdb")  # same settings as the agent
 records = [json.loads(line) for line in open(sys.argv[1]) if line.strip()]
 
 changed = []

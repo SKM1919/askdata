@@ -21,6 +21,7 @@ import duckdb
 
 sys.path.insert(0, "src")
 from agent import ask  # noqa: E402
+from guardrails import safe_connection  # noqa: E402
 
 PAUSE_S = 4      # wait between questions to stay under Gemini's free-tier rate limit
 NUM_TOL = 0.01   # 1% tolerance for decimals
@@ -109,7 +110,7 @@ def main():
     set_name = os.path.basename(qfile).replace(".jsonl", "")
     label = f"{set_name}_" + ("guide_on" if use_guide else "guide_off") + ("_semantic" if use_semantic else "")
     print(f"Semantic layer: {'ON' if use_semantic else 'OFF'}")
-    con = duckdb.connect("data/olist.duckdb", read_only=True)
+    con = safe_connection("data/olist.duckdb")  # same settings as the agent, or DuckDB refuses
     questions = [json.loads(line) for line in open(qfile) if line.strip()]
 
     print(f"Running {len(questions)} questions with schema guide {'ON' if use_guide else 'OFF'}...\n")
